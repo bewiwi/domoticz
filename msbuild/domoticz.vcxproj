@@ -63,7 +63,7 @@
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
     </Link>
     <PreBuildEvent>
-      <Command>SubWCRev .. ..\svntemplate.txt ..\svnversion.h</Command>
+      <Command>domoticz_version.bat</Command>
     </PreBuildEvent>
     <PreBuildEvent>
       <Message>Getting subversion revision</Message>

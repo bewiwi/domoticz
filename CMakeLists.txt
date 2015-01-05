@@ -113,14 +113,30 @@ FIND_PROGRAM(SVN_EXECUTABLE svn
   DOC "subversion command line client")
 
 MACRO(Subversion_GET_REVISION dir variable)
-  EXECUTE_PROCESS(COMMAND ${SVN_EXECUTABLE} info ${dir}
-    OUTPUT_VARIABLE ${variable}
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-  STRING(REGEX REPLACE "^(.*\n)?Revision: ([^\n]+).*"
-    "\\2" ${variable} "${${variable}}")
+  if(EXISTS ${dir}/.svn)
+    EXECUTE_PROCESS(COMMAND ${SVN_EXECUTABLE} info ${dir}
+      OUTPUT_VARIABLE ${variable}
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    STRING(REGEX REPLACE "^(.*\n)?Revision: ([^\n]+).*"
+      "\\2" ${variable} "${${variable}}")
+  endif()
 ENDMACRO(Subversion_GET_REVISION)
 
 Subversion_GET_REVISION(. ProjectRevision)
+
+MACRO(Git_GET_REVISION dir variable)
+  if(EXISTS ${dir}/.git)
+    EXECUTE_PROCESS(
+      COMMAND git log --grep=git-svn-id --max-count 1
+      COMMAND grep git-svn-id
+      COMMAND cut -d@ -f 2
+      COMMAND cut -d\  -f 1
+      OUTPUT_VARIABLE gitrevision)
+	SET(${variable} ${gitrevision})
+  endif()
+ENDMACRO(Git_GET_REVISION)
+
+Git_GET_REVISION(. ProjectRevision)
 MESSAGE(STATUS "Compiling Revision #${ProjectRevision}")
 
 # The version number.
@@ -134,9 +150,16 @@ include_directories(${CMAKE_SOURCE_DIR}/main)
 ADD_CUSTOM_TARGET(revisiontag ALL)
 
 # creates svnversion.h using cmake script
-ADD_CUSTOM_COMMAND(TARGET revisiontag COMMAND ${CMAKE_COMMAND}
-   -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR} 
-   -P ${CMAKE_CURRENT_SOURCE_DIR}/getsvn.cmake)
+if(EXISTS ${CMAKE_SOURCE_DIR}/.svn)
+  ADD_CUSTOM_COMMAND(TARGET revisiontag COMMAND ${CMAKE_COMMAND}
+     -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+     -P ${CMAKE_CURRENT_SOURCE_DIR}/getsvn.cmake)
+endif()
+if(EXISTS ${CMAKE_SOURCE_DIR}/.git)
+  ADD_CUSTOM_COMMAND(TARGET revisiontag COMMAND ${CMAKE_COMMAND}
+     -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+     -P ${CMAKE_CURRENT_SOURCE_DIR}/getgit.cmake)
+endif()
 
 ## Target
 set(
