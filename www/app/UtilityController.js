@@ -647,7 +647,7 @@ define(['app'], function (app) {
 							status=item.Data;
 							bigtext=item.Data;
 						}
-						else if ((item.SubType == "Voltage")||(item.SubType == "A/D")||(item.SubType == "Pressure")) {
+						else if ((item.SubType == "Voltage")||(item.SubType == "Current")||(item.SubType == "A/D")||(item.SubType == "Pressure")) {
 							status=item.Data;
 							bigtext=item.Data;
 						}
@@ -671,6 +671,10 @@ define(['app'], function (app) {
 							bigtext=item.Data;
 						}
 						else if ((item.Type == "Thermostat")&&(item.SubType=="SetPoint")) {
+							status=item.Data + '\u00B0 ' + $.myglobals.tempsign;
+							bigtext=item.Data + '\u00B0 ' + $.myglobals.tempsign;
+						}
+						else if (item.Type == "Radiator 1") {
 							status=item.Data + '\u00B0 ' + $.myglobals.tempsign;
 							bigtext=item.Data + '\u00B0 ' + $.myglobals.tempsign;
 						}
@@ -889,7 +893,7 @@ define(['app'], function (app) {
 						else if (item.SubType == "Leaf Wetness") {
 						  xhtm+=item.Data;
 						}
-						else if ((item.SubType == "Voltage")||(item.SubType == "A/D")||(item.SubType == "Pressure")) {
+						else if ((item.SubType == "Voltage")||(item.SubType == "Current")||(item.SubType == "A/D")||(item.SubType == "Pressure")) {
 						  xhtm+=item.Data;
 						}
 						else if (item.Type == "Lux") {
@@ -947,7 +951,7 @@ define(['app'], function (app) {
 					  xhtm+='leaf48.png" height="48" width="48"></td>\n';
 					  status=item.Data;
 					}
-					else if ((item.SubType == "Voltage")||(item.SubType == "A/D")) {
+					else if ((item.SubType == "Voltage")||(item.SubType == "Current")||(item.SubType == "A/D")) {
 					  xhtm+='current48.png" height="48" width="48"></td>\n';
 					  status=item.Data;
 					}
@@ -976,6 +980,10 @@ define(['app'], function (app) {
 					  status=item.Data;
 					}
 					else if ((item.Type == "Thermostat")&&(item.SubType=="SetPoint")) {
+					  xhtm+='override.png" height="48" width="48"></td>\n';
+					  status=item.Data + '\u00B0 ' + $.myglobals.tempsign;
+					}
+					else if (item.Type == "Radiator 1") {
 					  xhtm+='override.png" height="48" width="48"></td>\n';
 					  status=item.Data + '\u00B0 ' + $.myglobals.tempsign;
 					}
@@ -1092,6 +1100,18 @@ define(['app'], function (app) {
 							}
 						}
 				  }
+				  else if (item.Type == "Radiator 1") {
+						if (permissions.hasPermission("Admin")) {
+							xhtm+='<a class="btnsmall" onclick="ShowTempLog(\'#utilitycontent\',\'ShowUtilities\',' + item.idx + ',\'' + item.Name + '\');" data-i18n="Log">Log</a> ';
+							xhtm+='<a class="btnsmall" onclick="EditSetPoint(' + item.idx + ',\'' + item.Name + '\', ' + item.SetPoint + ',' + item.Protected +');" data-i18n="Edit">Edit</a> ';
+							if (item.Timers == "true") {
+								xhtm+='<a class="btnsmall-sel" onclick="ShowSetpointTimers(' + item.idx + ',\'' + item.Name + '\');" data-i18n="Timers">Timers</a> ';
+							}
+							else {
+								xhtm+='<a class="btnsmall" onclick="ShowSetpointTimers(' + item.idx + ',\'' + item.Name + '\');" data-i18n="Timers">Timers</a> ';
+							}
+						}
+				  }
 				  else if (item.SubType=="Thermostat Clock") {
 						if (permissions.hasPermission("Admin")) {
 							xhtm+='<a class="btnsmall" onclick="EditThermostatClock(' + item.idx + ',\'' + item.Name + '\', \'' + item.DayTime + '\',' + item.Protected +');" data-i18n="Edit">Edit</a> ';
@@ -1113,13 +1133,19 @@ define(['app'], function (app) {
 						xhtm+='<a class="btnsmall" onclick="EditUtilityDevice(' + item.idx + ',\'' + item.Name + '\');" data-i18n="Edit">Edit</a> ';
 					}
 				  }
+				  else if ((item.Type == "General")&&(item.SubType == "Current")) {
+					xhtm+='<a class="btnsmall" onclick="ShowGeneralGraph(\'#utilitycontent\',\'ShowUtilities\',' + item.idx + ',\'' + item.Name+ '\',' + item.SwitchTypeVal +', \'CurrentGeneral\');" data-i18n="Log">Log</a> ';
+					if (permissions.hasPermission("Admin")) {
+						xhtm+='<a class="btnsmall" onclick="EditUtilityDevice(' + item.idx + ',\'' + item.Name + '\');" data-i18n="Edit">Edit</a> ';
+					}
+				  }
 				  else if ((item.Type == "General")&&(item.SubType == "Pressure")) {
 					xhtm+='<a class="btnsmall" onclick="ShowGeneralGraph(\'#utilitycontent\',\'ShowUtilities\',' + item.idx + ',\'' + item.Name+ '\',' + item.SwitchTypeVal +', \'Pressure\');" data-i18n="Log">Log</a> ';
 					if (permissions.hasPermission("Admin")) {
 						xhtm+='<a class="btnsmall" onclick="EditUtilityDevice(' + item.idx + ',\'' + item.Name + '\');" data-i18n="Edit">Edit</a> ';
 					}
 				  }
-				  else if ((item.SubType == "Voltage")||(item.SubType == "A/D")) {
+				  else if ((item.SubType == "Voltage")||(item.SubType == "Current")||(item.SubType == "A/D")) {
 					xhtm+='<a class="btnsmall" onclick="ShowGeneralGraph(\'#utilitycontent\',\'ShowUtilities\',' + item.idx + ',\'' + item.Name+ '\',' + item.SwitchTypeVal +', \'' + item.SubType + '\');" data-i18n="Log">Log</a> ';
 					if (permissions.hasPermission("Admin")) {
 						xhtm+='<a class="btnsmall" onclick="EditUtilityDevice(' + item.idx + ',\'' + item.Name + '\');" data-i18n="Edit">Edit</a> ';

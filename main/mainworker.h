@@ -46,8 +46,8 @@ public:
 
 	void DecodeRXMessage(const CDomoticzHardwareBase *pHardware, const unsigned char *pRXCommand);
 
-	bool SwitchLight(const std::string &idx, const std::string &switchcmd,const std::string &level, const std::string &hue);
-	bool SwitchLight(unsigned long long idx, const std::string &switchcmd, int level, int hue);
+	bool SwitchLight(const std::string &idx, const std::string &switchcmd,const std::string &level, const std::string &hue, const std::string &ooc);
+	bool SwitchLight(unsigned long long idx, const std::string &switchcmd, int level, int hue, bool ooc=false);
 	bool SwitchLightInt(const std::vector<std::string> &sd, std::string switchcmd, int level, int hue, const bool IsTesting);
 
 	bool SwitchScene(const std::string &idx, const std::string &switchcmd);
@@ -56,6 +56,7 @@ public:
 	bool DoesDeviceActiveAScene(const int HwdId, const std::string &idx, const int unit, const int devType, const int subType);
 
 	bool SetSetPoint(const std::string &idx, const float TempValue);
+	bool SetSetPoint(const std::string &idx, const float TempValue, const int newMode, const std::string &until);
 	bool SetThermostatState(const std::string &idx, const int newState);
 	bool SetSetPointInt(const std::vector<std::string> &sd, const float TempValue);
 	bool SetClock(const std::string &idx, const std::string &clockstr);
@@ -66,6 +67,8 @@ public:
 	bool SetZWaveThermostatFanModeInt(const std::vector<std::string> &sd, const int fMode);
 
 	bool SetRFXCOMHardwaremodes(const int HardwareID, const unsigned char Mode1,const unsigned char Mode2,const unsigned char Mode3,const unsigned char Mode4,const unsigned char Mode5);
+	
+	bool SwitchModal(const std::string &idx, const std::string &status, const std::string &action, const std::string &ooc, const std::string &until);
 
 	bool GetSunSettings();
 	void LoadSharedUsers();
@@ -102,8 +105,11 @@ public:
 	bool m_bHaveDownloadedDomoticzUpdate;
 	bool m_bHaveDownloadedDomoticzUpdateSuccessFull;
 
+	void GetAvailableWebThemes();
+
 	tcp::server::CTCPServer m_sharedserver;
 	std::string m_LastSunriseSet;
+	std::vector<std::string> m_webthemes;
 private:
 	void HandleAutomaticBackups();
 	unsigned long long PerformRealActionFromDomoticzClient(const unsigned char *pRXCommand, CDomoticzHardwareBase **pOriginalHardware);
@@ -183,6 +189,7 @@ private:
 	unsigned long long decode_Thermostat1(const CDomoticzHardwareBase *pHardware, const int HwdID, const tRBUF *pResponse);
 	unsigned long long decode_Thermostat2(const CDomoticzHardwareBase *pHardware, const int HwdID, const tRBUF *pResponse);
 	unsigned long long decode_Thermostat3(const CDomoticzHardwareBase *pHardware, const int HwdID, const tRBUF *pResponse);
+	unsigned long long decode_Radiator1(const CDomoticzHardwareBase *pHardware, const int HwdID, const tRBUF *pResponse);
 	unsigned long long decode_Baro(const CDomoticzHardwareBase *pHardware, const int HwdID, const tRBUF *pResponse);
 	unsigned long long decode_TempHumBaro(const CDomoticzHardwareBase *pHardware, const int HwdID, const tRBUF *pResponse);
 	unsigned long long decode_TempBaro(const CDomoticzHardwareBase *pHardware, const int HwdID, const tRBUF *pResponse);
@@ -210,6 +217,9 @@ private:
 	unsigned long long decode_BBQ(const CDomoticzHardwareBase *pHardware, const int HwdID, const tRBUF *pResponse);
 	unsigned long long decode_Power(const CDomoticzHardwareBase *pHardware, const int HwdID, const tRBUF *pResponse);
 	unsigned long long decode_LimitlessLights(const CDomoticzHardwareBase *pHardware, const int HwdID, const tRBUF *pResponse);
+	unsigned long long decode_evohome1(const CDomoticzHardwareBase *pHardware, const int HwdID, const tRBUF *pResponse);
+	unsigned long long decode_evohome2(const CDomoticzHardwareBase *pHardware, const int HwdID, const tRBUF *pResponse);
+	unsigned long long decode_evohome3(const CDomoticzHardwareBase *pHardware, const int HwdID, const tRBUF *pResponse);
 };
 
 extern MainWorker m_mainworker;

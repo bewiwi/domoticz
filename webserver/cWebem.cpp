@@ -53,7 +53,8 @@ myServer( address, port, myRequestHandler ),
 m_DigistRealm("Domoticz.com"),
 m_zippassword(""),
 m_actsessionid(""),
-m_actualuser("")
+m_actualuser(""),
+actTheme("")
 {
 	
 	m_actualuser_rights = -1;
@@ -509,7 +510,6 @@ bool cWebem::CheckForPageOverride(const request& req, reply& rep)
 	{
 		request_path += "index.html";
 	}
-
 	myNameValues.clear();
 	m_lastRequestPath=request_path;
 
@@ -647,13 +647,19 @@ bool cWebem::CheckForPageOverride(const request& req, reply& rep)
 	return true;
 }
 
-void cWebem::AddUserPassword(const unsigned long ID, const std::string &username, const std::string &password, const _eUserRights userrights)
+void cWebem::SetWebTheme(const std::string &themename)
+{
+	actTheme = "/styles/"+themename;
+}
+
+void cWebem::AddUserPassword(const unsigned long ID, const std::string &username, const std::string &password, const _eUserRights userrights, const int activetabs)
 {
 	_tWebUserPassword wtmp;
 	wtmp.ID=ID;
 	wtmp.Username=username;
 	wtmp.Password=password;
 	wtmp.userrights=userrights;
+	wtmp.ActiveTabs = activetabs;
 	m_userpasswords.push_back(wtmp);
 }
 
@@ -1689,8 +1695,9 @@ void cWebemRequestHandler::handle_request( const std::string &sHost, const reque
 			if (!rep.bIsGZIP)
 				CompressWebOutput(req,rep);
 		}
-		else if (rep.headers[1].value == "image/png")
+		else if (rep.headers[1].value.find("image/")!=std::string::npos)
 		{
+			//Cache images
 			int theaders = rep.headers.size();
 			rep.headers.resize(theaders + 2);
 

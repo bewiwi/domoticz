@@ -69,6 +69,16 @@ Version 2.0.xxxx (October xxth 2014)
 - Fixed: Temperature trend-line toggle removed range chart data
 - Implemented: EnOcean3, added support for door level
 - Changed: Mertik, will now display status=ON when received Up/Down command
+- Fixed: Dashboard, Scenes now not displayed if user does not have the rights to them
+- Implemented: Option for Dummy device to create Ampere Sensor
+- Implemented: P1 SmartMeter, support for the Gyr E350 (Gas reading)
+- Implemented: Manual add Smartwares Radiator switch/device (will be visible afterwards at Utilities)
+- Implemented: Cubie internal Voltage/Current sensors
+- Implemented: Evohome support (Thanks to Will!)
+- Implemented: GUI Theme selection
+- Changed: Themes are now sorted, ignoring .svn folders
+- Changed: Better/Correct appcache handling of themes
+- Implemented: Blinds1, T7 Forest
 
 Version 2.0.2025 (September 28th 2014)
 - Implemented: Fibaro Link data pusher

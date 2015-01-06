@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# ref 676
+# ref 694
 
 CACHE:
 # CSS
@@ -9,6 +9,7 @@ css/colpick.css
 css/jquery.dataTables.min.css
 css/demo_table_jui.css
 css/jquery.uix.multiselect.css
+css/jquery-ui-timepicker-addon.css
 css/style.css
 css/ui-darkness/jquery-ui-1.10.3.custom.min.css
 secpanel/css/font.less
@@ -325,6 +326,26 @@ images/WindWNW.png
 images/WindWSW.png
 images/xls.png
 images/xls_hover.png
+images/evohome/Auto.png
+images/evohome/AutoWithEco.png
+images/evohome/AutoWithEcoInv.png
+images/evohome/Away.png
+images/evohome/AwayInv.png
+images/evohome/Custom.png
+images/evohome/CustomInv.png
+images/evohome/DayOff.png
+images/evohome/DayOffInv.png
+images/evohome/HeatingOff.png
+images/evohome/HeatingOffInv.png
+images/evohome/Off.png
+images/evohome/On.png
+images/evohome/OpenWindow.png
+images/evohome/PermanentOverride.png
+images/evohome/PermanentOverrideInv.png
+images/evohome/RemoteOverride.png
+images/evohome/RemoteOverrideInv.png
+images/evohome/TemporaryOverride.png
+images/evohome/TemporaryOverrideInv.png
 images/startup/apple-touch-startup-image-1024x748.png
 images/startup/apple-touch-startup-image-1536x2008.png
 images/startup/apple-touch-startup-image-2048x1496.png
@@ -444,6 +465,7 @@ js/jquery.isotope.min.js
 js/jquery.jeditable.mini.js
 js/jquery.ui.touch-punch.min.js
 js/jquery.uix.multiselect.min.js
+js/jquery-ui-timepicker-addon.js
 js/modules/exporting.js
 js/ng-grid-flexible-height.js
 js/ng-grid.min.js
@@ -461,6 +483,12 @@ js/ZeroClipboard.js
 secpanel/js/less.js
 secpanel/js/ion.sound.js
 ozwcp/cp.js
+
+#Dynamic theme
+#ThemeFiles
+
+#Dynamic floorplans
+#Floorplans
 
 # HTML pages
 views/cam.html

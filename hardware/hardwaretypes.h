@@ -1,6 +1,7 @@
 #pragma once
 
 #define sTypeDomoticzSecurity 0x83
+#define sTypeSmartwaresSwitchRadiator 0x84
 
 #define sTypeRAINWU 0x70	 //Weather Underground (Total rain reported, no counter)
 
@@ -42,6 +43,7 @@
 #define sTypeZWaveThermostatMode	0x14
 #define sTypeZWaveThermostatFanMode	0x15
 #define sTypeAlert					0x16
+#define sTypeCurrent				0x17
 
 #define pTypeLux		0xF6
 #define sTypeLux		0x01
@@ -76,6 +78,22 @@
 //Z-Wave
 //#define pTypeENERGY 0x5A
 #define sTypeZWaveUsage 0xA0
+
+//types for evohome
+#define pTypeEvohome 0x45 
+#define sTypeEvohome 0x00 //Controller
+
+#define pTypeEvohomeZone 0x46 //Seems easier to define a new type here
+#define sTypeEvohomeZone 0x00 //Actual temp zone
+
+#define pTypeEvohomeWater 0x47 //Seems easier to define a new type here
+#define sTypeEvohomeWater 0x00 //Hot water (Ideally this would just be a zone but for whatever reason evohome treats this differently)
+
+#define pTypeEvohomeRelay 0x44 //Relay
+#define sTypeEvohomeRelay 0x00 
+
+//#define sTypeEvohomeOutside 0x30 //If connected
+//#define sTypeEvohomeStatus 0x40 //Not sure if we can do this in 1 sensor would be for things like zone valve status, boiler relay status (maybe OT values too) and comms errors (maybe seperature sensor or switch for each is easiest)
 
 typedef struct _tThermostat {
 	unsigned char len;
@@ -291,3 +309,53 @@ typedef struct _tLimitlessLights {
 #define Limitless_NightMode 20
 #define Limitless_FullBrightness 21
 #define Limitless_DiscoSpeedFasterLong 22 //exclude RGB
+
+typedef union tREVOBUF {
+	struct _tEVOHOME1 {
+		unsigned char len;
+		unsigned char type;
+		unsigned char subtype;
+		BYTE	id1;
+		BYTE	id2;
+		BYTE	id3;
+		uint8_t	status;
+		uint8_t	mode;
+		uint16_t year;
+		uint8_t	month;
+		uint8_t	day;
+		uint8_t	hrs;
+		uint8_t	mins;
+		uint8_t	action;
+	} EVOHOME1;
+
+	struct _tEVOHOME2 {
+		unsigned char len;
+		unsigned char type;
+		unsigned char subtype;
+		BYTE	id1;
+		BYTE	id2;
+		BYTE	id3;
+		uint8_t	zone;
+		uint8_t	updatetype;
+		int16_t	temperature;
+		uint8_t	mode;
+		uint8_t	controllermode;
+		uint16_t year;
+		uint8_t	month;
+		uint8_t	day;
+		uint8_t	hrs;
+		uint8_t	mins;
+		uint8_t	battery_level;
+	} EVOHOME2;
+	
+	struct _tEVOHOME3 {
+		unsigned char len;
+		unsigned char type;
+		unsigned char subtype;
+		BYTE	id1;
+		BYTE	id2;
+		BYTE	id3;
+		uint8_t	devno;
+		uint8_t	demand;
+	} EVOHOME3;
+} REVOBUF;

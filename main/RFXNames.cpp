@@ -2,6 +2,7 @@
 #include "RFXNames.h"
 #include "RFXtrx.h"
 #include "../hardware/hardwaretypes.h"
+#include "../hardware/evohome.h"
 
 typedef struct _STR_TABLE_SINGLE {
 	unsigned long    id;
@@ -174,6 +175,8 @@ const char *Hardware_Type_Desc(int hType)
 		{ HTYPE_HARMONY_HUB, "Logitech Harmony Hub" },
 		{ HTYPE_Mochad, "Mochad CM15Pro bridge with LAN interface" },
 		{ HTYPE_Philips_Hue, "Philips Hue Bridge" },
+		{ HTYPE_EVOHOME_SERIAL, "Evohome USB (for HGI/S80)" },
+		{ HTYPE_EVOHOME_SCRIPT, "Evohome via script" },
 		{ 0, NULL, NULL }
 	};
 	return findTableIDSingle1 (Table, hType);
@@ -241,6 +244,7 @@ const char *Notification_Type_Desc(const int nType, const unsigned char snum)
 		{ NTYPE_PERCENTAGE, "Percentage", "P" },
 		{ NTYPE_RPM, "RPM", "Z" },
 		{ NTYPE_DEWPOINT, "Dew Point", "D" },
+		{ NTYPE_SETPOINT, "Set Point", "N" },
 		
 		{  0,NULL,NULL }
 	};
@@ -271,8 +275,9 @@ const char *Notification_Type_Label(const int nType)
 		{ NTYPE_TODAYCOUNTER, "cnt" },
 		{ NTYPE_SWITCH_OFF, "On" },
 		{ NTYPE_PERCENTAGE, "%%" },
-		{ NTYPE_DEWPOINT, "degrees" },
 		{ NTYPE_RPM, "RPM" },
+		{ NTYPE_DEWPOINT, "degrees" },
+		{ NTYPE_SETPOINT, "degrees" },
 		{  0,NULL,NULL }
 	};
 	return findTableIDSingle1 (Table, nType);
@@ -331,7 +336,8 @@ const char *RFX_Type_Desc(const unsigned char i, const unsigned char snum)
 		{ pTypeThermostat1, "Thermostat 1" , "temperature" },
 		{ pTypeThermostat2, "Thermostat 2" , "temperature" },
 		{ pTypeThermostat3, "Thermostat 3" , "temperature" },
-		{ pTypeTEMP, "Temp" , "temperature" },
+		{ pTypeRadiator1, "Radiator 1", "temperature" },
+		{ pTypeTEMP, "Temp", "temperature" },
 		{ pTypeHUM, "Humidity" , "temperature" },
 		{ pTypeTEMP_HUM, "Temp + Humidity" , "temperature" },
 		{ pTypeBARO, "Barometric" , "temperature" },
@@ -365,6 +371,10 @@ const char *RFX_Type_Desc(const unsigned char i, const unsigned char snum)
 		{ pTypeBBQ, "BBQ Meter", "bbq" },
 		{ pTypePOWER, "Current/Energy" , "current" },
 		{ pTypeRFY, "RFY" , "blinds" },
+		{ pTypeEvohome, "Heating" , "evohome" },
+		{ pTypeEvohomeZone, "Heating" , "evohome" },
+		{ pTypeEvohomeWater, "Heating" , "evohome" },
+		{ pTypeEvohomeRelay, "Heating" , "evohome" },
 		{  0,NULL,NULL }
 	};
 	if (snum==1)
@@ -383,7 +393,7 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 		{ pTypeTEMP, sTypeTEMP4, "RTHN318" },
 		{ pTypeTEMP, sTypeTEMP5, "LaCrosse TX3" },
 		{ pTypeTEMP, sTypeTEMP6, "TS15C" },
-		{ pTypeTEMP, sTypeTEMP7, "Viking 02811" },
+		{ pTypeTEMP, sTypeTEMP7, "Viking 02811, Proove TSS330" },
 		{ pTypeTEMP, sTypeTEMP8, "LaCrosse WS2300" },
 		{ pTypeTEMP, sTypeTEMP9, "RUBiCSON" },
 		{ pTypeTEMP, sTypeTEMP10, "TFA 30.3133" },
@@ -401,7 +411,7 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 		{ pTypeTEMP_HUM, sTypeTH6, "THGR918, THGRN228, THGN500" },
 		{ pTypeTEMP_HUM, sTypeTH7, "Cresta, TFA TS34C" },
 		{ pTypeTEMP_HUM, sTypeTH8, "WT450H" },
-		{ pTypeTEMP_HUM, sTypeTH9, "Viking 02035, 02038" },
+		{ pTypeTEMP_HUM, sTypeTH9, "Viking 02035, 02038, TSS320" },
 		{ pTypeTEMP_HUM, sTypeTH10, "Rubicson/IW008T/TX95" },
 		{ pTypeTEMP_HUM, sTypeTH11, "Oregon EW109" },
 		{ pTypeTEMP_HUM, sTypeTH12, "Imagintronix" },
@@ -477,6 +487,7 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 		{ pTypeBlinds, sTypeBlindsT5, "Media Mount" },
 		{ pTypeBlinds, sTypeBlindsT6, "T6 DC106" },
 		{ pTypeBlinds, sTypeBlindsT7, "Forest" },
+		{ pTypeBlinds, sTypeBlindsT8, "Chamberlain CS4330CN" },
 
 		{ pTypeSecurity1, sTypeSecX10, "X10 security" },
 		{ pTypeSecurity1, sTypeSecX10M, "X10 security motion" },
@@ -506,6 +517,9 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 
 		{ pTypeThermostat3, sTypeMertikG6RH4T1, "Mertik G6R-H4T1" },
 		{ pTypeThermostat3, sTypeMertikG6RH4TB, "Mertik G6R-H4TB" },
+
+		{ pTypeRadiator1, sTypeSmartwares, "Smartwares" },
+		{ pTypeRadiator1, sTypeSmartwaresSwitchRadiator, "Smartwares Mode" },
 
 		{ pTypeDT, sTypeDT1, "RTGR328N" },
 
@@ -551,6 +565,7 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 		{ pTypeGeneral, sTypePercentage, "Percentage" },
 		{ pTypeGeneral, sTypeFan, "Fan" },
 		{ pTypeGeneral, sTypeVoltage, "Voltage" },
+		{ pTypeGeneral, sTypeCurrent, "Current" },
 		{ pTypeGeneral, sTypePressure, "Pressure" },
 		{ pTypeGeneral, sTypeSetPoint, "Setpoint" },
 		{ pTypeGeneral, sTypeTemperature, "Temperature" },
@@ -565,6 +580,7 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 
 		{ pTypeChime, sTypeByronSX, "ByronSX" },
 		{ pTypeChime, sTypeByronMP001, "Byron MP001" },
+		{ pTypeChime, sTypeSelectPlus, "SelectPlus" },
 
 		{ pTypeTEMP_RAIN, sTypeTR1, "Alecto WS1200" },
 
@@ -579,6 +595,10 @@ const char *RFX_Type_SubType_Desc(const unsigned char dType, const unsigned char
 		{ pTypeRFY, sTypeRFY, "RFY" },
 		{ pTypeRFY, sTypeRFYext, "RFY-Ext" },
 
+		{ pTypeEvohome, sTypeEvohome, "Evohome" },
+		{ pTypeEvohomeZone, sTypeEvohomeZone, "Zone" },
+		{ pTypeEvohomeWater, sTypeEvohomeWater, "Hot Water" },
+		{ pTypeEvohomeRelay, sTypeEvohomeRelay, "Relay" },
 
 		{  0,0,NULL }
 	};
@@ -688,6 +708,7 @@ const char *RFX_Type_SubType_Values(const unsigned char dType, const unsigned ch
 		{ pTypeBlinds, sTypeBlindsT5, "Status" },
 		{ pTypeBlinds, sTypeBlindsT6, "Status" },
 		{ pTypeBlinds, sTypeBlindsT7, "Status" },
+		{ pTypeBlinds, sTypeBlindsT8, "Status" },
 
 		{ pTypeSecurity1, sTypeSecX10, "Status" },
 		{ pTypeSecurity1, sTypeSecX10M, "Status" },
@@ -717,6 +738,9 @@ const char *RFX_Type_SubType_Values(const unsigned char dType, const unsigned ch
 
 		{ pTypeThermostat3, sTypeMertikG6RH4T1, "Status" },
 		{ pTypeThermostat3, sTypeMertikG6RH4TB, "Status" },
+
+		{ pTypeRadiator1, sTypeSmartwares, "Status" },
+		{ pTypeRadiator1, sTypeSmartwaresSwitchRadiator, "Status" },
 
 		{ pTypeDT, sTypeDT1, "?????" },
 
@@ -762,6 +786,7 @@ const char *RFX_Type_SubType_Values(const unsigned char dType, const unsigned ch
 		{ pTypeGeneral, sTypePercentage, "Percentage" },
 		{ pTypeGeneral, sTypeFan, "Fanspeed" },
 		{ pTypeGeneral, sTypeVoltage, "Voltage" },
+		{ pTypeGeneral, sTypeCurrent, "Current" },
 		{ pTypeGeneral, sTypePressure, "Pressure" },
 		{ pTypeGeneral, sTypeSetPoint, "Temperature" },
 		{ pTypeGeneral, sTypeTemperature, "Temperature" },
@@ -776,6 +801,7 @@ const char *RFX_Type_SubType_Values(const unsigned char dType, const unsigned ch
 
 		{ pTypeChime, sTypeByronSX, "Status" },
 		{ pTypeChime, sTypeByronMP001, "Status" },
+		{ pTypeChime, sTypeSelectPlus, "Status" },
 
 		{ pTypeTEMP_RAIN, sTypeTR1, "Temperature,Total rain" },
 
@@ -789,6 +815,10 @@ const char *RFX_Type_SubType_Values(const unsigned char dType, const unsigned ch
 
 		{ pTypeRFY, sTypeRFY, "Status" },
 		{ pTypeRFY, sTypeRFYext, "Status" },
+		{ pTypeEvohome, sTypeEvohome, "Status" },
+		{ pTypeEvohomeZone, sTypeEvohomeZone, "Temperature,Set point,Status" },
+		{ pTypeEvohomeWater, sTypeEvohomeWater, "Temperature,State,Status" },
+		{ pTypeEvohomeRelay, sTypeEvohomeRelay, "Status" },
 
 		{  0,0,NULL }
 	};
@@ -1449,6 +1479,38 @@ void GetLightStatus(
 			break;
 		}
 		break;
+	case pTypeRadiator1:
+		switch (nValue)
+		{
+		case Radiator1_sNight:
+			lstatus = "Off";
+			break;
+		case Radiator1_sDay:
+			lstatus = "On";
+			break;
+		case Radiator1_sSetTemp:
+			lstatus = "On";
+			break;
+		}
+		break;
+	case pTypeEvohome:
+		llevel=0;
+		lstatus=CEvohome::GetWebAPIModeName(nValue);
+		break;
+	case pTypeEvohomeRelay:
+		bHaveDimmer=true;
+		maxDimLevel=200;
+		llevel=int(0.5f*atof(sValue.c_str()));;
+		switch (nValue)
+		{
+		case light1_sOff:
+			lstatus="Off";
+			break;
+		case light1_sOn:
+			lstatus="On";
+			break;
+		}
+		break;
 	}
 }
 
@@ -2052,6 +2114,23 @@ bool GetLightCommand(
 			return true;
 		}
 		break;
+	case pTypeRadiator1:
+	{
+		if (switchcmd == "On")
+		{
+			cmd = Radiator1_sDay;
+		}
+		else if (switchcmd == "Off")
+		{
+			cmd = Radiator1_sNight;
+		}
+		else
+		{
+			cmd = Radiator1_sNight;
+		}
+		return true;
+	}
+	break;
 	}
 	//unknown command
 	return false;

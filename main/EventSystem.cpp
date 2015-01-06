@@ -362,6 +362,13 @@ void CEventSystem::GetCurrentMeasurementStates()
 			isTemp = true;
 			isBaro = true;
 			break;
+		case pTypeRadiator1:
+			if (sitem.subType == sTypeSmartwares)
+			{
+				utilityval = static_cast<float>(atof(sitem.sValue.c_str()));
+				isUtility = true;
+			}
+			break;
 		case pTypeUV:
 			if (splitresults.size() == 2)
 			{
@@ -456,6 +463,16 @@ void CEventSystem::GetCurrentMeasurementStates()
 					isUtility = true;
 				}
 				else if (sitem.subType == sTypeVoltage)
+				{
+					utilityval = static_cast<float>(atof(splitresults[0].c_str()));
+					isUtility = true;
+				}
+				else if (sitem.subType == sTypeCurrent)
+				{
+					utilityval = static_cast<float>(atof(splitresults[0].c_str()));
+					isUtility = true;
+				}
+				else if (sitem.subType == sTypeSetPoint)
 				{
 					utilityval = static_cast<float>(atof(splitresults[0].c_str()));
 					isUtility = true;
@@ -1421,11 +1438,11 @@ void CEventSystem::EvaluateLua(const std::string &reason, const std::string &fil
 {
 	boost::lock_guard<boost::mutex> l(luaMutex);
 
-	if (isEventscheduled(filename))
-	{
-		//_log.Log(LOG_NORM,"Already scheduled this event, skipping");
-		return;
-	}
+	//if (isEventscheduled(filename))
+	//{
+	//	//_log.Log(LOG_NORM,"Already scheduled this event, skipping");
+	//	return;
+	//}
 
 	lua_State *lua_state;
 	lua_state = luaL_newstate();
@@ -2112,10 +2129,23 @@ void CEventSystem::UpdateDevice(const std::string &DevParams)
 
 		//Check if it's a setpoint device, and if so, set the actual setpoint
 
-		if ((idtype == pTypeThermostat) && (idsubtype == sTypeThermSetpoint))
+		if (
+			((idtype == pTypeThermostat) && (idsubtype == sTypeThermSetpoint)) ||
+			(idtype == pTypeRadiator1)
+			)
 		{
 			_log.Log(LOG_NORM, "Sending SetPoint to device....");
 			m_mainworker.SetSetPoint(idx, static_cast<float>(atof(svalue.c_str())));
+		}
+		else if ((idtype == pTypeGeneral) && (idsubtype == sTypeZWaveThermostatMode))
+		{
+			_log.Log(LOG_NORM, "Sending Thermostat Mode to device....");
+			m_mainworker.SetZWaveThermostatMode(idx, atoi(nvalue.c_str()));
+		}
+		else if ((idtype == pTypeGeneral) && (idsubtype == sTypeZWaveThermostatFanMode))
+		{
+			_log.Log(LOG_NORM, "Sending Thermostat Fan Mode to device....");
+			m_mainworker.SetZWaveThermostatFanMode(idx, atoi(nvalue.c_str()));
 		}
 	}
 }
