@@ -498,6 +498,15 @@ const char *sqlCreateFloorplanOrderTrigger =
 	"	UPDATE Floorplans SET [Order] = (SELECT MAX([Order]) FROM Floorplans)+1 WHERE Floorplans.ID = NEW.ID;\n"
 	"END;\n";
 
+const char *sqlCreateCustomImages =
+	"CREATE TABLE IF NOT EXISTS [CustomImages]("
+	"	[Name] VARCHAR(80) NOT NULL, "
+	"	[Description] VARCHAR(80) NOT NULL, "
+	"	[IconSmall] BLOB, "
+	"	[ImageOn] BLOB, "
+	"	[ImageOff] BLOB);";
+
+
 extern std::string szStartupFolder;
 
 CSQLHelper::CSQLHelper(void)
@@ -613,6 +622,7 @@ bool CSQLHelper::OpenDatabase()
 	query(sqlCreateUserVariables);
 	query(sqlCreateFloorplans);
 	query(sqlCreateFloorplanOrderTrigger);
+	query(sqlCreateCustomImages);
 
 	if ((!bNewInstall) && (dbversion < DB_VERSION))
 	{
@@ -2348,6 +2358,48 @@ bool CSQLHelper::SendNotification(const std::string &EventID, const std::string 
 		}
 	}
 
+	//check if PushALot enabled
+	if (GetPreferencesVar("PushALotAPI", nValue, sValue))
+	{
+		sValue = stdstring_trim(sValue);
+		if (sValue != "")
+		{
+			//send message to PushAlot
+			std::stringstream sPostData;
+			std::string IsImportant;
+			std::string IsSilent;
+
+			// map priority to PushAlot 'IsSilent' & 'IsImportant'
+			switch (Priority) {
+			case -2: // Fall through to -1
+			case -1:
+				IsImportant = "False";
+				IsSilent = "True";
+				break;
+			case 2: // Fall through to 1
+			case 1:
+				IsImportant = "True";
+				IsSilent = "False";
+				break;
+			default:
+				IsImportant = "False";
+				IsSilent = "False";
+				break;
+			}
+
+			sPostData << "AuthorizationToken=" << sValue << "&IsImportant=" << IsImportant << "&IsSilent=" << IsSilent << "&Source=Domoticz&Body=" << uencode.URLEncode(Message);
+			std::vector<std::string> ExtraHeaders;
+			if (!HTTPClient::POST("https://pushalot.com/api/sendmessage", sPostData.str(), ExtraHeaders, sResult))
+			{
+				_log.Log(LOG_ERROR, "Error sending PushALot Notification!");
+			}
+			else
+			{
+				_log.Log(LOG_STATUS, "Notification sent (PushALot)");
+			}
+		}
+	}
+
 	//check if Email enabled
 	if (GetPreferencesVar("UseEmailInNotifications", nValue))
 	{
@@ -2460,6 +2512,50 @@ bool CSQLHelper::SendNotificationEx(const std::string &Subject, const std::strin
 			}
 		}
 	}
+
+	//check if PushALot enabled
+	if (GetPreferencesVar("PushALotAPI", nValue, sValue))
+	{
+		sValue = stdstring_trim(sValue);
+		if (sValue != "")
+		{
+			//send message to PushAlot
+			std::stringstream sPostData;
+			std::string IsImportant;
+			std::string IsSilent;
+
+			// map priority to PushAlot 'IsSilent' & 'IsImportant'
+			switch (Priority) {
+				case -2: // Fall through to -1
+				case -1:
+					IsImportant = "False";
+					IsSilent = "True";
+					break;
+				case 2: // Fall through to 1
+				case 1:
+					IsImportant = "True";
+					IsSilent = "False";
+					break;
+				default:
+					IsImportant = "False";
+					IsSilent = "False";
+					break;
+			}
+
+			sPostData << "AuthorizationToken=" << sValue << "&IsImportant=" << IsImportant << "&IsSilent=" << IsSilent << "&Source=Domoticz&Title=" << uencode.URLEncode(Subject) << "&Body=" << uencode.URLEncode(notimessage);
+
+			std::vector<std::string> ExtraHeaders;
+			if (!HTTPClient::POST("https://pushalot.com/api/sendmessage", sPostData.str(), ExtraHeaders, sResult))
+			{
+				_log.Log(LOG_ERROR, "Error sending PushALot Notification!");
+			}
+			else
+			{
+				_log.Log(LOG_STATUS, "Notification sent (PushALot)");
+			}
+		}
+	}
+
 	//check if Email enabled
 	if (GetPreferencesVar("UseEmailInNotifications", nValue))
 	{

@@ -4379,6 +4379,31 @@ namespace http {
 					root["status"] = "OK";
 				}
 			}
+			else if (cparam == "testpushalot")
+			{
+				CURLEncode uencode;
+				std::string palapi = CURLEncode::URLDecode(m_pWebEm->FindValue("palapi"));
+				if (palapi == "")
+					return;
+
+				root["title"] = "Test PushALot";
+				std::stringstream sPostData;
+				std::string sResult;
+				std::string palTitle = "Domoticz test";
+				std::string palMessage = "Domoticz test message!";
+				std::vector<std::string> ExtraHeaders;
+				sPostData << "AuthorizationToken=" << palapi << "&IsImportant=False&IsSilent=False&Source=Domoticz&Title=" << uencode.URLEncode(palTitle) << "&Body=" << uencode.URLEncode(palMessage);
+
+				if (!HTTPClient::POST("https://pushalot.com/api/sendmessage", sPostData.str(), ExtraHeaders, sResult))
+				{
+					_log.Log(LOG_ERROR, "Error sending PushALot Notification!");
+				}
+				else
+				{
+					_log.Log(LOG_STATUS, "Notification sent (PushALot)");
+					root["status"] = "OK";
+				}
+			}
 			else if (cparam == "testemail")
 			{
 				std::string EmailFrom = m_pWebEm->FindValue("EmailFrom");
@@ -7140,6 +7165,8 @@ namespace http {
 			m_sql.UpdatePreferencesVar("PushoverAPI", CURLEncode::URLDecode(PushoverAPI).c_str());
 			std::string PushoverUser = m_pWebEm->FindValue("PushoverUserID");
 			m_sql.UpdatePreferencesVar("PushoverUser", CURLEncode::URLDecode(PushoverUser).c_str());
+			std::string PushALotAPI = m_pWebEm->FindValue("PushALotAPIKey");
+			m_sql.UpdatePreferencesVar("PushALotAPI", CURLEncode::URLDecode(PushALotAPI).c_str());
 			std::string DashboardType = m_pWebEm->FindValue("DashboardType");
 			m_sql.UpdatePreferencesVar("DashboardType", atoi(DashboardType.c_str()));
 			std::string MobileType = m_pWebEm->FindValue("MobileType");
@@ -12484,6 +12511,10 @@ namespace http {
 				{
 					root["PushoverUser"] = sValue;
 				}
+				else if (Key == "PushALotAPI")
+				{
+					root["PushALotAPI"] = sValue;
+				}
 				else if (Key == "DashboardType")
 				{
 					root["DashboardType"] = nValue;
@@ -14677,44 +14708,50 @@ namespace http {
 									root["resultprev"][iPrev]["ta"] = ta;
 								}
 							}
-							//No chill/baro/hum for now
-							/*
 							if (
-							((dType==pTypeWIND)&&(dSubType==sTypeWIND4))||
-							((dType==pTypeWIND)&&(dSubType==sTypeWINDNoTemp))
-							)
+								((dType == pTypeWIND) && (dSubType == sTypeWIND4)) ||
+								((dType == pTypeWIND) && (dSubType == sTypeWINDNoTemp))
+								)
 							{
-							double ch=ConvertTemperature(atof(sd[3].c_str()),tempsign);
-							double cm=ConvertTemperature(atof(sd[2].c_str()),tempsign);
-							root["resultprev"][iPrev]["ch"]=ch;
-							root["resultprev"][iPrev]["cm"]=cm;
+								double ch = ConvertTemperature(atof(sd[3].c_str()), tempsign);
+								double cm = ConvertTemperature(atof(sd[2].c_str()), tempsign);
+								root["resultprev"][iPrev]["ch"] = ch;
+								root["resultprev"][iPrev]["cm"] = cm;
 							}
-							if ((dType==pTypeHUM)||(dType==pTypeTEMP_HUM)||(dType==pTypeTEMP_HUM_BARO))
+							if ((dType == pTypeHUM) || (dType == pTypeTEMP_HUM) || (dType == pTypeTEMP_HUM_BARO))
 							{
-							root["resultprev"][iPrev]["hu"]=sd[4];
+								root["resultprev"][iPrev]["hu"] = sd[4];
 							}
 							if (
-							(dType==pTypeTEMP_HUM_BARO)||
-							(dType==pTypeTEMP_BARO)
-							)
+								(dType == pTypeTEMP_HUM_BARO) ||
+								(dType == pTypeTEMP_BARO)
+								)
 							{
-							if (dType==pTypeTEMP_HUM_BARO)
+								if (dType == pTypeTEMP_HUM_BARO)
+								{
+									if (dSubType == sTypeTHBFloat)
+									{
+										sprintf(szTmp, "%.1f", atof(sd[5].c_str()) / 10.0f);
+										root["resultprev"][iPrev]["ba"] = szTmp;
+									}
+									else
+										root["resultprev"][iPrev]["ba"] = sd[5];
+								}
+								else if (dType == pTypeTEMP_BARO)
+								{
+									sprintf(szTmp, "%.1f", atof(sd[5].c_str()) / 10.0f);
+									root["resultprev"][iPrev]["ba"] = szTmp;
+								}
+							}
+							if ((dType == pTypeEvohomeZone) || (dType == pTypeEvohomeWater))
 							{
-							if (dSubType==sTypeTHBFloat)
-							{
-							sprintf(szTmp,"%.1f",atof(sd[5].c_str())/10.0f);
-							root["resultprev"][iPrev]["ba"]=szTmp;
+								double sx = ConvertTemperature(atof(sd[8].c_str()), tempsign);
+								double sm = ConvertTemperature(atof(sd[7].c_str()), tempsign);
+								double se = ConvertTemperature(atof(sd[9].c_str()), tempsign);
+								root["resultprev"][iPrev]["se"] = se;
+								root["resultprev"][iPrev]["sm"] = sm;
+								root["resultprev"][iPrev]["sx"] = sx;
 							}
-							else
-							root["resultprev"][iPrev]["ba"]=sd[5];
-							}
-							else if (dType==pTypeTEMP_BARO)
-							{
-							sprintf(szTmp,"%.1f",atof(sd[5].c_str())/10.0f);
-							root["resultprev"][iPrev]["ba"]=szTmp;
-							}
-							}
-							*/
 							iPrev++;
 						}
 					}
