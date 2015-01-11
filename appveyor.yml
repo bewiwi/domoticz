@@ -18,4 +18,4 @@ deploy:
 - provider: GitHub
   auth_token:
     secure: c/IQaV1eV8VrQaSt8NOUSqF18cVy17e+vl6NzgrPLNfu0nyxhdQvrGbXOrKbpJnq
-  draft: true
+  prerelease: true
