@@ -1,0 +1,21 @@
+﻿version: 1.0.{build}
+
+install:
+- ps: cinst innosetup
+
+build_script:
+- cd msbuild
+- appveyor DownloadFile http://www.domoticz.com/WindowsLibraries.zip
+- '7z x WindowsLibraries.zip > NUL:'
+- cd ..
+- msbuild msbuild\domoticz.sln /p:Configuration=Release /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+- '"C:\Program Files (x86)\Inno Setup 5\ISCC.exe" msbuild\WindowsInstaller\DomoticzSetup.iss'
+
+artifacts:
+- path: msbuild\WindowsInstaller\DomoticzSetup*.exe
+
+deploy:
+- provider: GitHub
+  auth_token:
+    secure: c/IQaV1eV8VrQaSt8NOUSqF18cVy17e+vl6NzgrPLNfu0nyxhdQvrGbXOrKbpJnq
+  draft: true
