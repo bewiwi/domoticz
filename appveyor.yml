@@ -1,4 +1,6 @@
 ﻿version: 1.0.{build}
+skip_tags: true
+clone_depth: 10
 
 install:
 - ps: cinst innosetup
