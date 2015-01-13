@@ -5,4 +5,8 @@ before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -y build-essential
   - sudo apt-get install -y cmake libboost-dev libboost-thread-dev libboost-system-dev libsqlite3-dev subversion curl libcurl4-openssl-dev libusb-dev zlib1g-dev
-script: cmake -DCMAKE_BUILD_TYPE=Release . && make
+  - svn co http://open-zwave.googlecode.com/svn/trunk/ open-zwave-read-only
+script:
+  - (cd open-zwave-read-only; make)
+  - cmake -DCMAKE_BUILD_TYPE=Release
+  - make
