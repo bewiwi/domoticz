@@ -1,6 +1,9 @@
-﻿version: 1.0.{build}
+version: 1.0.{build}
 skip_tags: true
 clone_depth: 10
+branches:
+  only:
+  - cibuild
 
 install:
 - ps: cinst innosetup
