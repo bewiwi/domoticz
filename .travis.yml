@@ -8,5 +8,5 @@ before_install:
   - svn co http://open-zwave.googlecode.com/svn/trunk/ open-zwave-read-only
 script:
   - (cd open-zwave-read-only; make)
-  - cmake -DCMAKE_BUILD_TYPE=Release
+  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_LIBRARY_PATH=open-zwave-read-only
   - make
