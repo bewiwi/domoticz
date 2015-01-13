@@ -13,3 +13,14 @@ script:
   - (cd open-zwave-read-only; make)
   - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_LIBRARY_PATH=open-zwave-read-only
   - make
+before_deploy:
+  - tar czf domoticz_${TRAVIS_BUILD_NUMBER}.tgz domoticz History.txt License.txt svnversion.h domoticz.sh --exclude .git www/ scripts/ Config/
+deploy:
+  provider: releases
+  api-key:
+    secure: TBH9KopK/4nAe/AGCkd6jV82t3aCREpHLAiaGAG9m22wfKIvo3YxvSXcH8iaQWLWBEKlRzYCQorx650vR22aQiiJwYlaRnhnVM1IAKMIImY5Aw4+r7fKUCPERCVkkPikMIxJwWZkGanVfJiGir9gLrwSFLzy3DRXPVNRPS2uHUk=
+  file: domoticz_${TRAVIS_BUILD_NUMBER}.tgz
+  skip_cleanup: true
+  on:
+    tags: true
+    all_branches: true
