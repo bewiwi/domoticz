@@ -35,6 +35,9 @@
 #include "Logger.h"
 #include "SQLHelper.h"
 #include <algorithm>
+#ifdef NS_ENABLE_SSL
+#include "../webserver/net_skeleton.h"
+#endif
 
 #ifndef WIN32
 #include <sys/utsname.h>
@@ -50,6 +53,69 @@
 
 extern std::string szStartupFolder;
 extern std::string szWWWFolder;
+#ifdef NS_ENABLE_SSL
+std::string ssl_list_conn;
+std::string ssl_recv_conn;
+ns_mgr *secure_www_wrapper = NULL;
+
+static void secure_www_ev_handler(struct ns_connection *nc, enum ns_event ev, void *p) {
+	const char *target_addr = (const char *)nc->mgr->user_data;
+	struct ns_connection *pc = (struct ns_connection *) nc->connection_data;
+	struct iobuf *io = &nc->recv_iobuf;
+
+	(void)p;
+	switch (ev) {
+	case NS_ACCEPT:
+		// Create a connection to the target, and interlink both connections
+		nc->connection_data = ns_connect(nc->mgr, target_addr, nc);
+		if (nc->connection_data == NULL) {
+			nc->flags |= NSF_CLOSE_IMMEDIATELY;
+		}
+		break;
+
+	case NS_CLOSE:
+		// If either connection closes, unlink them and schedule closing
+		if (pc != NULL) {
+			pc->flags |= NSF_FINISHED_SENDING_DATA;
+			pc->connection_data = NULL;
+		}
+		nc->connection_data = NULL;
+		break;
+
+	case NS_RECV:
+		// Forward arrived data to the other connection, and discard from buffer
+		if (pc != NULL) {
+			ns_send(pc, io->buf, io->len);
+			iobuf_remove(io, io->len);
+		}
+		break;
+
+	default:
+		break;
+	}
+}
+
+void *secure_www_wrapper_init(const char *local_addr, const char *target_addr, const char **err_msg)
+{
+	struct ns_mgr *mgr = (struct ns_mgr *) calloc(1, sizeof(mgr[0]));
+	*err_msg = NULL;
+
+	if (mgr == NULL) {
+		*err_msg = "malloc failed";
+	}
+	else {
+		ns_mgr_init(mgr, (void *)target_addr, secure_www_ev_handler);
+		if (ns_bind(mgr, local_addr, NULL) == NULL) {
+			*err_msg = "ns_bind() failed: bad listening_port";
+			ns_mgr_free(mgr);
+			free(mgr);
+			mgr = NULL;
+		}
+	}
+
+	return mgr;
+}
+#endif
 
 extern std::string szAppVersion;
 extern bool m_bDontCacheHTMLPages;
@@ -122,6 +188,18 @@ namespace http {
 			}
 
 			_log.Log(LOG_STATUS, "WebServer stopped...");
+		}
+		void CWebServer::Do_Secure_Work()
+		{
+#ifdef NS_ENABLE_SSL
+			while (!m_stop_secure_thread)
+			{
+				ns_mgr_poll(secure_www_wrapper, 1000);
+			}
+			ns_mgr_free(secure_www_wrapper);
+			free(secure_www_wrapper);
+			_log.Log(LOG_STATUS, "Secure WebServer stopped...");
+#endif
 		}
 
 		void CWebServer::ReloadCustomSwitchIcons()
@@ -221,7 +299,7 @@ namespace http {
 			}
 		}
 
-		bool CWebServer::StartServer(const std::string &listenaddress, const std::string &listenport, const std::string &serverpath, const bool bIgnoreUsernamePassword)
+		bool CWebServer::StartServer(const std::string &listenaddress, const std::string &listenport, const std::string &secure_listenport, const std::string &serverpath, const std::string &secure_cert_file, const bool bIgnoreUsernamePassword)
 		{
 			StopServer();
 			ReloadCustomSwitchIcons();
@@ -502,17 +580,49 @@ namespace http {
 			RegisterRType("openzwavenodes", boost::bind(&CWebServer::RType_OpenZWaveNodes, this, _1));
 #endif	
 
-			//Start worker thread
+			//Start normal worker thread
 			m_thread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&CWebServer::Do_Work, this)));
 
+#ifdef NS_ENABLE_SSL
+			if (!secure_listenport.empty())
+			{
+				const char *err_msg;
+				ssl_list_conn = "ssl://" + secure_listenport + ":" + secure_cert_file;
+				ssl_recv_conn = "127.0.0.1:" + listenport;
+				if ((secure_www_wrapper = (ns_mgr*)secure_www_wrapper_init(ssl_list_conn.c_str(), ssl_recv_conn.c_str(), &err_msg)) == NULL) {
+					_log.Log(LOG_ERROR, "Failed to start secure web-server");
+				}
+				else {
+					//Start secure worker thread
+					_log.Log(LOG_STATUS, "Secure Webserver started on port: %s", secure_listenport.c_str());
+					m_stop_secure_thread = false;
+					m_secure_thread = boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&CWebServer::Do_Secure_Work, this)));
+				}
+			}
+#endif
 			return (m_thread != NULL);
 		}
 
 		void CWebServer::StopServer()
 		{
-			if (m_pWebEm == NULL)
-				return;
-			m_pWebEm->Stop();
+			m_stop_secure_thread = true;
+			try
+			{
+				if (m_pWebEm == NULL)
+					return;
+				m_pWebEm->Stop();
+#ifdef NS_ENABLE_SSL
+				m_stop_secure_thread = true;
+				if (m_secure_thread)
+				{
+					m_secure_thread->join();
+				}
+#endif
+			}
+			catch (...)
+			{
+				
+			}
 		}
 
 		void CWebServer::SetAuthenticationMethod(int amethod)
@@ -794,7 +904,7 @@ namespace http {
 			int mode4 = 0;
 			int mode5 = 0;
 			int port = atoi(sport.c_str());
-			if ((htype == HTYPE_RFXtrx315) || (htype == HTYPE_RFXtrx433) || (htype == HTYPE_P1SmartMeter) || (htype == HTYPE_Rego6XX) || (htype == HTYPE_DavisVantage) || (htype == HTYPE_S0SmartMeter) || (htype == HTYPE_OpenThermGateway) || (htype == HTYPE_TeleinfoMeter) || (htype == HTYPE_OpenZWave) || (htype == HTYPE_EnOceanESP2) || (htype == HTYPE_EnOceanESP3) || (htype == HTYPE_Meteostick))
+			if ((htype == HTYPE_RFXtrx315) || (htype == HTYPE_RFXtrx433) || (htype == HTYPE_P1SmartMeter) || (htype == HTYPE_Rego6XX) || (htype == HTYPE_DavisVantage) || (htype == HTYPE_S0SmartMeter) || (htype == HTYPE_OpenThermGateway) || (htype == HTYPE_TeleinfoMeter) || (htype == HTYPE_OpenZWave) || (htype == HTYPE_EnOceanESP2) || (htype == HTYPE_EnOceanESP3) || (htype == HTYPE_Meteostick) || (htype == HTYPE_MySensorsUSB))
 			{
 				//USB
 				if ((htype == HTYPE_RFXtrx315) || (htype == HTYPE_RFXtrx433))
@@ -934,7 +1044,7 @@ namespace http {
 			if (
 				(htype == HTYPE_RFXtrx315) || (htype == HTYPE_RFXtrx433) ||
 				(htype == HTYPE_P1SmartMeter) || (htype == HTYPE_Rego6XX) || (htype == HTYPE_DavisVantage) || (htype == HTYPE_S0SmartMeter) || (htype == HTYPE_OpenThermGateway) ||
-				(htype == HTYPE_TeleinfoMeter) || (htype == HTYPE_OpenZWave) || (htype == HTYPE_EnOceanESP2) || (htype == HTYPE_EnOceanESP3) || (htype == HTYPE_Meteostick) || (htype == HTYPE_System)
+				(htype == HTYPE_TeleinfoMeter) || (htype == HTYPE_OpenZWave) || (htype == HTYPE_EnOceanESP2) || (htype == HTYPE_EnOceanESP3) || (htype == HTYPE_Meteostick) || (htype == HTYPE_System) || (htype == HTYPE_MySensorsUSB)
 				)
 			{
 				//USB/System
@@ -6113,6 +6223,7 @@ namespace http {
 			}
 			else if (cparam == "learnsw")
 			{
+				m_sql.AllowNewHardwareTimer(5);
 				m_sql.m_LastSwitchID = "";
 				bool bReceivedSwitch = false;
 				unsigned char cntr = 0;
@@ -7424,6 +7535,10 @@ namespace http {
 			std::string RaspCamParams = m_pWebEm->FindValue("RaspCamParams");
 			if (RaspCamParams != "")
 				m_sql.UpdatePreferencesVar("RaspCamParams", RaspCamParams.c_str());
+			
+            std::string UVCParams = m_pWebEm->FindValue("UVCParams");
+			if (UVCParams != "")
+				m_sql.UpdatePreferencesVar("UVCParams", UVCParams.c_str());
 
 			std::string EnableNewHardware = m_pWebEm->FindValue("AcceptNewHardware");
 			int iEnableNewHardware = (EnableNewHardware == "on" ? 1 : 0);
@@ -7631,7 +7746,7 @@ namespace http {
 			Response.IRESPONSE.LIGHTING4enabled = (m_pWebEm->FindValue("Lighting4") == "on") ? 1 : 0;
 			Response.IRESPONSE.RSLenabled = (m_pWebEm->FindValue("RSL") == "on") ? 1 : 0;
 			Response.IRESPONSE.SXenabled = (m_pWebEm->FindValue("ByronSX") == "on") ? 1 : 0;
-			Response.IRESPONSE.RFU6enabled = (m_pWebEm->FindValue("rfu6") == "on") ? 1 : 0;
+			Response.IRESPONSE.IMAGINTRONIXenabled = (m_pWebEm->FindValue("rfu6") == "on") ? 1 : 0;
 
 			m_mainworker.SetRFXCOMHardwaremodes(atoi(idx.c_str()), Response.ICMND.msg1, Response.ICMND.msg2, Response.ICMND.msg3, Response.ICMND.msg4, Response.ICMND.msg5);
 
@@ -9183,6 +9298,7 @@ namespace http {
 							}
 						}
 						root["result"][ii]["CounterToday"] = szTmp;
+
 
 						std::vector<std::string> splitresults;
 						StringSplit(sValue, ";", splitresults);
@@ -12899,6 +13015,10 @@ namespace http {
 				{
 					root["RaspCamParams"] = sValue;
 				}
+				else if (Key == "UVCParams")
+				{
+					root["UVCParams"] = sValue;
+				}
 				else if (Key == "AcceptNewHardware")
 				{
 					root["AcceptNewHardware"] = nValue;
@@ -15755,6 +15875,29 @@ namespace http {
 								break;
 							}
 							root["counter"] = szTmp;
+						}
+						else if (dType == pTypeYouLess)
+						{
+							std::vector<std::string> results;
+							StringSplit(sValue, ";", results);
+							if (results.size() == 2)
+							{
+								//Add last counter value
+								float fvalue = static_cast<float>(atof(results[0].c_str()));
+								switch (metertype)
+								{
+								case MTYPE_ENERGY:
+									sprintf(szTmp, "%.3f", fvalue / EnergyDivider);
+									break;
+								case MTYPE_GAS:
+									sprintf(szTmp, "%.2f", fvalue / GasDivider);
+									break;
+								case MTYPE_WATER:
+									sprintf(szTmp, "%.2f", fvalue / WaterDivider);
+									break;
+								}
+								root["counter"] = szTmp;
+							}
 						}
 						//Actual Year
 						szQuery << "SELECT Value, Date FROM " << dbasetable << " WHERE (DeviceRowID==" << idx << " AND Date>='" << szDateStart << "' AND Date<='" << szDateEnd << "') ORDER BY Date ASC";

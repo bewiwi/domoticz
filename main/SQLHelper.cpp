@@ -1294,6 +1294,10 @@ bool CSQLHelper::OpenDatabase()
 	{
 		UpdatePreferencesVar("RaspCamParams", "-w 800 -h 600 -t 1"); //width/height/time2wait
 	}
+	if (!GetPreferencesVar("UVCParams", sValue))
+	{
+		UpdatePreferencesVar("UVCParams", "- -S80 -B128 -C128 -G80 -x800 -y600 -q100"); //width/height/time2wait
+	}
 	nValue = 1;
 	if (!GetPreferencesVar("AcceptNewHardware", nValue))
 	{
